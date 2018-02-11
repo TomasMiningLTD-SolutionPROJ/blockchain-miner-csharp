@@ -10,17 +10,17 @@ using System.Security.Cryptography;
 
 namespace SoftUniMiner
 {
-    class Program
+    public class Program
     {
-        static BlockHeader header = new BlockHeader();
-        static Config config = new Config();
-        static Timer blockUpdateTimer;
-        static CancellationTokenSource cts;
-        static int MaxNonceLength = ulong.MaxValue.ToString().Length;
-        static ulong NonceRangeStart = Convert.ToUInt64(Math.Pow(10, MaxNonceLength - 1));
-        static int HashPerfCounter;
+        private static readonly BlockHeader header = new BlockHeader();
+        private static readonly Config config = new Config();
+        private static Timer blockUpdateTimer;
+        private static CancellationTokenSource cts;
+        private static readonly int MaxNonceLength = ulong.MaxValue.ToString().Length;
+        private static readonly ulong NonceRangeStart = Convert.ToUInt64(Math.Pow(10, MaxNonceLength - 1));
+        private static int HashPerfCounter;
 
-        static void Main(string[] args)
+        public static void Main()
         {
             config.NodeURL = "http://localhost:5555/";
             config.MyAddress = "1337";
@@ -60,7 +60,7 @@ namespace SoftUniMiner
             }
         }
 
-        static Task<Tuple<string, ulong, string>> MineRange(ulong start, ulong length, CancellationToken cancel)
+        private static Task<Tuple<string, ulong, string>> MineRange(ulong start, ulong length, CancellationToken cancel)
         {
             return Task.Run(() =>
             {
@@ -115,7 +115,7 @@ namespace SoftUniMiner
             });
         }
 
-        static void UpdateBlock(object state)
+        private static void UpdateBlock(object state)
         {
             try
             {
@@ -141,7 +141,7 @@ namespace SoftUniMiner
             Console.WriteLine("Hashrate: {0} kh/s", Math.Round(hashesSinceLastUpdate / config.UpdateInterval.TotalSeconds / 1000));
         }
 
-        static void SubmitBlock(string nonce, ulong timestamp, string blockHash)
+        private static void SubmitBlock(string nonce, ulong timestamp, string blockHash)
         {
             var data = new { nounce = nonce, dateCreated = timestamp, blockHash = blockHash };
             var dataString = JsonConvert.SerializeObject(data);
@@ -163,7 +163,7 @@ namespace SoftUniMiner
             }
         }
 
-        static bool CheckHash(byte[] hash)
+        private static bool CheckHash(byte[] hash)
         {
             var i = 0;
 
@@ -183,7 +183,7 @@ namespace SoftUniMiner
             return true;
         }
 
-        static ulong UnixEpoch(DateTime dt)
+        private static ulong UnixEpoch(DateTime dt)
         {
             return Convert.ToUInt64(dt.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds);
         }
