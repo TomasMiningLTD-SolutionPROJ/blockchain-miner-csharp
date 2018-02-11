@@ -22,14 +22,14 @@ namespace SoftUniMiner
 
         static void Main(string[] args)
         {
-            config.NodeURL = "http://localhost:3000/";
+            config.NodeURL = "http://localhost:5555/";
             config.MyAddress = "1337";
             config.GetTaskURL = $"mineBlock/{config.MyAddress}";
             config.GivePoWURL = $"mining/submit-block/{config.MyAddress}";
             config.UpdateInterval = TimeSpan.FromSeconds(3);
 
             UpdateBlock(null);
-            blockUpdateTimer = new Timer(UpdateBlock, null, config.UpdateInterval, config.UpdateInterval);
+            blockUpdateTimer = new Timer(UpdateBlock, null, TimeSpan.Zero, config.UpdateInterval);
 
             int threads = Environment.ProcessorCount - 1;
             ulong chunkSize = (ulong.MaxValue - NonceRangeStart) / (ulong)threads;
@@ -37,6 +37,11 @@ namespace SoftUniMiner
             while (true)
             {
                 cts = new CancellationTokenSource();
+
+                if (header.BlockHash == null)
+                {
+                    continue;
+                }
 
                 var taskList = new List<Task<Tuple<string, ulong, string>>>();
                 for (var i = 0; i < threads; i++)
@@ -59,6 +64,11 @@ namespace SoftUniMiner
         {
             return Task.Run(() =>
             {
+                if (header.BlockHash == null)
+                {
+                    return null;
+                }
+
                 byte[] blockHash = Encoding.UTF8.GetBytes(header.BlockHash);
                 byte[] timestamp = Encoding.UTF8.GetBytes(UnixEpoch(header.Timestamp).ToString());
                 byte[] startNonce = Encoding.UTF8.GetBytes(start.ToString());
@@ -140,8 +150,16 @@ namespace SoftUniMiner
             {
                 client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
                 client.Headers.Add(HttpRequestHeader.Accept, "application/json");
-                var res = client.UploadString(config.NodeURL + config.GivePoWURL, "POST", dataString);
-                Console.WriteLine("Submit share response: {0}", res);
+                try
+                {
+                    var res = client.UploadString(config.NodeURL + config.GivePoWURL, "POST", dataString);
+                    Console.WriteLine("Submit share response: {0}", res);
+                    header.BlockHash = null;
+                }
+                catch
+                {
+                    Console.WriteLine("Error submiting response");
+                }
             }
         }
 
