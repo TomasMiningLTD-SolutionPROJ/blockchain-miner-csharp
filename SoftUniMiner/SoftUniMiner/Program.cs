@@ -29,7 +29,7 @@ namespace SoftUniMiner
             config.UpdateInterval = TimeSpan.FromSeconds(3);
 
             UpdateBlock(null);
-            blockUpdateTimer = new Timer(UpdateBlock, null, TimeSpan.Zero, config.UpdateInterval);
+            blockUpdateTimer = new Timer(UpdateBlock, null, config.UpdateInterval, config.UpdateInterval);
 
             int threads = Environment.ProcessorCount - 1;
             ulong chunkSize = (ulong.MaxValue - NonceRangeStart) / (ulong)threads;
@@ -128,6 +128,11 @@ namespace SoftUniMiner
                     header.Difficulty = obj[0].difficulty;
                     header.Timestamp = DateTime.UtcNow;
                     header.Nonce = 0;
+
+                    if (cts != null && !cts.IsCancellationRequested)
+                    {
+                        cts.Cancel();
+                    }
 
                     Console.WriteLine("New work {0}", header.BlockHash);
                 }
